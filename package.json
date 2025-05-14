@@ -12,8 +12,10 @@
   "dependencies": {
     "@tanstack/react-query": "^5.76.1",
     "autoprefixer": "^10.4.21",
+    "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
     "mysql": "^2.18.1",
     "postcss": "^8.5.3",
     "react": "^19.1.0",
