@@ -77,7 +77,7 @@ app.post("/signup", async (req, res) => {
     connection.query(query, [name, mobile, hashedPassword], (err, results) => {
       if (err) {
         console.error("Query error:", err);
-        return res.status(500).json({ message: "Unable to signup" });
+        return res.status(500).json({ message: "mobile number already exist" });
       }
 
       // 3. JWT payload
