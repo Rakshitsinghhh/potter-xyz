@@ -54,7 +54,7 @@ app.post("/login", (req, res) => {
       name: user.name,
     };
 
-    const token = jwt.sign(payload, "shhhh", { expiresIn: "1h" });
+    const token = jwt.sign(payload, "shhhh");
 
     return res.status(200).json({
       message: "Login successful",
@@ -82,7 +82,7 @@ app.post("/signup", async (req, res) => {
 
       // 3. JWT payload
       const payload = { mobile, name };
-      const token = jwt.sign(payload, "shhhh", { expiresIn: "1h" });
+      const token = jwt.sign(payload, "shhhh");
 
       // 4. Send response
       return res.status(200).json({
