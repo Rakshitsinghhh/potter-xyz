@@ -5,33 +5,32 @@ export function Login() {
   const mobile = useRef();
   const pass = useRef();
 
-    async function checker() { 
+  async function checker() {
     const mobileValue = mobile.current.value;
     const passwordValue = pass.current.value;
 
     try {
-        const response = await fetch("http://localhost:5000/login", {
+      const response = await fetch("http://localhost:5000/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mobile: mobileValue, password: passwordValue }),
-        });
+      });
 
-        const data = await response.json();
+      const data = await response.json();
 
-        if (response.ok) {
+      if (response.ok) {
         // Login successful
         localStorage.setItem("token", data.token);
         console.log("User:", data.user);
-        console.log("token:",data.token)
+        console.log("token:", data.token);
         window.location.href = "/mainpage"; // redirect
-        } else {
-        alert(data.message); 
-        }
+      } else {
+        alert(data.message);
+      }
     } catch (err) {
-        console.error("Login failed:", err);
+      console.error("Login failed:", err);
     }
-    }
-
+  }
 
   return (
     <div
