@@ -107,6 +107,28 @@ app.post("/signup", async (req, res) => {
 });
 
 
+app.post("/logs", (req, res) => {
+  // in this it is firing two time 2 entry at one time and also uid not given and action is not defined as /logs is not getting uid and name as well
+  const forwarded = req.headers['x-forwarded-for'];
+  const ip = forwarded ? forwarded.split(',')[0].trim() : req.socket.remoteAddress;
+
+  const action = `User signup`;
+  const uid = 45;
+
+  console.log("Inserting log for uid:", uid, "IP:", ip, "Time:", new Date().toISOString());
+
+  const insertQuery = `INSERT INTO logs (uid, action, ip, time) VALUES (?, ?, ?, NOW())`;
+
+  connection.query(insertQuery, [uid, action, ip], (err, results) => {
+    if (err) {
+      console.error("log Insert error:", err);
+      return res.status(500).json({ message: "Insert failed" });
+    }
+    res.status(200).json({ message: "Log inserted successfully" });
+  });
+});
+
+
 function jwtv(req, res) {
   const token = req.body.token;
   const secret = "shhhh";

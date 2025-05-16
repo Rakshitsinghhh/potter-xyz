@@ -1,3 +1,9 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@font-face {
+  font-family: 'Lemon Funky';
+  src: url('/fonts/Lemon Funky TTF.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}

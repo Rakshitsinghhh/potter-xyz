@@ -8,13 +8,14 @@ import './App.css';
 import Login from './components/login';
 import Signup from './components/signup';
 import Main from './components/mainroot';
+import FlyingEmojis from './components/bg';
 
 const queryClient = new QueryClient();
 
 const router = createBrowserRouter(
   [
     {
-      path: '/',
+      path: '/login',
       element: <Login />,
     },
     {
@@ -22,7 +23,7 @@ const router = createBrowserRouter(
       element: <Signup />,
     },
     {
-      path: '/main',
+      path: '/',
       element: <Main />,
     },
   ],
