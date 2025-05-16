@@ -67,26 +67,37 @@ app.post("/signup", async (req, res) => {
   const { mobile, password, name } = req.body;
 
   try {
-    // 1. Hash the password
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
-
-    // 2. Insert into DB
-    const query = `INSERT INTO users (name, mobile, password) VALUES (?, ?, ?)`;
-    connection.query(query, [name, mobile, hashedPassword], (err, results) => {
+    // 1. Check if mobile exists
+    const checkQuery = `SELECT * FROM users WHERE mobile = ?`;
+    connection.query(checkQuery, [mobile], async (err, results) => {
       if (err) {
         console.error("Query error:", err);
-        return res.status(500).json({ message: "mobile number already exist" });
+        return res.status(500).json({ message: "Database error" });
       }
 
-      // 3. JWT payload
-      const payload = { mobile, name };
-      const token = jwt.sign(payload, "shhhh");
+      if (results.length > 0) {
+        return res.status(409).json({ message: "Mobile number already exists" });
+      }
 
-      // 4. Send response
-      return res.status(200).json({
-        message: "Signup successful",
-        token,
-        user: payload,
+      // 2. Hash the password
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+      // 3. Insert new user
+      const insertQuery = `INSERT INTO users (name, mobile, password) VALUES (?, ?, ?)`;
+      connection.query(insertQuery, [name, mobile, hashedPassword], (err, results) => {
+        if (err) {
+          console.error("Insert error:", err);
+          return res.status(500).json({ message: "Insert failed" });
+        }
+        // 4. Generate token
+        const payload = { mobile, name };
+        const token = jwt.sign(payload, "shhhh");
+
+        return res.status(200).json({
+          message: "Signup successful",
+          token,
+          user: payload,
+        });
       });
     });
   } catch (err) {
@@ -94,6 +105,7 @@ app.post("/signup", async (req, res) => {
     return res.status(500).json({ message: "Error processing signup" });
   }
 });
+
 
 function jwtv(req, res) {
   const token = req.body.token;
@@ -108,7 +120,6 @@ function jwtv(req, res) {
     console.log("error")
   }
 }
-
 app.post("/Main", jwtv);
 
 app.listen(port, () => {

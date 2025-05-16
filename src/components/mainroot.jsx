@@ -34,3 +34,5 @@ export function Main() {
   // Optional render output (can be kept or removed)
   return <div>Check console for auth status</div>;
 }
+
+export default Main;
