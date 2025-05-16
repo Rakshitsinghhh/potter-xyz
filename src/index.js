@@ -2,9 +2,9 @@ import express from "express";
 import cors from "cors";
 import mysql from "mysql";
 import jwt from "jsonwebtoken";
-import bcrypt from "bcrypt"
+import bcrypt from "bcrypt";
 
-const saltRounds=10;
+const saltRounds = 10;
 
 const app = express();
 const port = 5000;
@@ -23,7 +23,6 @@ connection.connect((err) => {
   if (err) throw err;
   console.log("Connected to database");
 });
-
 
 app.post("/login", (req, res) => {
   const { mobile, password } = req.body;
@@ -64,7 +63,6 @@ app.post("/login", (req, res) => {
   });
 });
 
-
 app.post("/signup", async (req, res) => {
   const { mobile, password, name } = req.body;
 
@@ -96,6 +94,22 @@ app.post("/signup", async (req, res) => {
     return res.status(500).json({ message: "Error processing signup" });
   }
 });
+
+function jwtv(req, res) {
+  const token = req.body.token;
+  const secret = "shhhh";
+
+  try {
+    const decoded = jwt.verify(token, secret);
+    res.send("ok");
+    console.log("succesfull")
+  } catch (err) {
+    res.status(401).send({ error: err.message });
+    console.log("error")
+  }
+}
+
+app.post("/Main", jwtv);
 
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);

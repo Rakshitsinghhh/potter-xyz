@@ -28,7 +28,7 @@ export function Signup() {
         localStorage.setItem("token", data.token);
         console.log("User:", data.user);
         console.log("token:", data.token);
-        window.location.href = "/mainpage";
+        window.location.href = "/main";
       } else {
         alert(data.message);
       }

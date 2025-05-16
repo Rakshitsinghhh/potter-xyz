@@ -23,7 +23,7 @@ export function Login() {
         localStorage.setItem("token", data.token);
         console.log("User:", data.user);
         console.log("token:", data.token);
-        window.location.href = "/mainpage"; // redirect
+        window.location.href = "/main"; // redirect
       } else {
         alert(data.message);
       }
