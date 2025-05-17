@@ -22,6 +22,12 @@ export function Login() {
 
       if (response.ok) {
         // Login successful
+        await fetch("http://localhost:5000/logs", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token: data.token , action : "login"}),
+        });
+
         localStorage.setItem("token", data.token);
         console.log("User:", data.user);
         console.log("token:", data.token);

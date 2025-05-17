@@ -29,6 +29,12 @@ export function Signup() {
       const data = await response.json();
 
       if (response.ok) {
+        await fetch("http://localhost:5000/logs", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token: data.token , action : "signup"}),
+        });
+
         localStorage.setItem("token", data.token);
         console.log("User:", data.user);
         console.log("token:", data.token);

@@ -68,11 +68,10 @@ export default function Main() {
         });
 
         if (response.ok) {
-          // Also log the action
-          await fetch("http://localhost:5000/log", {
+          await fetch("http://localhost:5000/logs", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ token: tkn }),
+            body: JSON.stringify({ token: tkn ,action : "main accessed"}),
           });
 
           setAuthenticated(true); // ✅ allow rendering
