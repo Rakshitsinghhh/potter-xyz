@@ -122,7 +122,7 @@ if (!authenticated) return (
         </button>
       </div>
 
-      <button onClick={paneler} className="absolute top-4 right-4 px-4 py-2 bg-orange-500 rounded font-lemonfunky">
+      <button onClick={paneler} className="absolute top-1 right-4 px-4 py-2 bg-orange-500 rounded font-lemonfunky">
         {panel ? "Hide Panel" : "Show Panel"}
       </button>
 

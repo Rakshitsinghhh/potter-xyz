@@ -8,9 +8,15 @@ import './App.css';
 import Login from './components/login';
 import Signup from './components/signup';
 import Main from './components/mainroot';
-import FlyingEmojis from './components/bg';
+import { useMemo } from 'react';
+import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
+import { WalletDisconnectButton, WalletModalProvider, WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+// Import styles for the wallet adapter
+import '@solana/wallet-adapter-react-ui/styles.css';
 
+// Define endpoint
 const queryClient = new QueryClient();
+const endpoint = "https://api.devnet.solana.com";
 
 const router = createBrowserRouter(
   [
@@ -26,19 +32,25 @@ const router = createBrowserRouter(
       path: '/',
       element: <Main />,
     },
-  ],
-  {
-    future: {
-      v7_startTransition: true,
-      v7_relativeSplatPath: true,
-    },
-  }
+  ]
 );
 
 function App() {
+
+  const wallets = useMemo(() => [], []);
+  
   return (
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+    <QueryClientProvider client={queryClient}> 
+      <ConnectionProvider endpoint={endpoint}>
+        <WalletProvider wallets={wallets} autoConnect>
+          <WalletModalProvider>
+            <div className='bg-[black]'>
+              <WalletMultiButton className='p-3'/>
+            </div>
+            <RouterProvider router={router} />
+          </WalletModalProvider>
+        </WalletProvider>
+      </ConnectionProvider>
     </QueryClientProvider>
   );
 }
