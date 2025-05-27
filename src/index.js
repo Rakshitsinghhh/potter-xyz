@@ -3,6 +3,9 @@ import cors from "cors";
 import mysql from "mysql";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const saltRounds = 10;
 
@@ -12,16 +15,55 @@ const port = 5000;
 app.use(cors());
 app.use(express.json());
 
+// Connect without database first
 const connection = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "potter",
+  host: process.env.host,
+  user: process.env.user,
+  password: process.env.password,
 });
-
 connection.connect((err) => {
   if (err) throw err;
-  console.log("Connected to database");
+  console.log("Connected to MySQL server");
+
+  // Create database if not exists
+  connection.query(`CREATE DATABASE IF NOT EXISTS potter`, (err) => {
+    if (err) throw err;
+    console.log("Database 'potter' ensured");
+
+    // Switch to the database
+    connection.changeUser({ database: "potter" }, (err) => {
+      if (err) throw err;
+
+      // Create users table
+      const usersTable = `
+        CREATE TABLE IF NOT EXISTS users (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          name VARCHAR(255) NOT NULL,
+          mobile VARCHAR(20) NOT NULL UNIQUE,
+          password VARCHAR(255) NOT NULL
+        )
+      `;
+      connection.query(usersTable, (err) => {
+        if (err) throw err;
+        console.log("Table 'users' ensured");
+      });
+
+      // Create logs table
+      const logsTable = `
+        CREATE TABLE IF NOT EXISTS logs (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          mobile VARCHAR(20) NOT NULL,
+          action VARCHAR(255),
+          ip VARCHAR(45),
+          time DATETIME
+        )
+      `;
+      connection.query(logsTable, (err) => {
+        if (err) throw err;
+        console.log("Table 'logs' ensured");
+      });
+    });
+  });
 });
 
 app.post("/login", (req, res) => {
@@ -42,7 +84,6 @@ app.post("/login", (req, res) => {
 
     const user = results[0];
 
-    // ✅ Compare hashed password
     const match = await bcrypt.compare(password, user.password);
     if (!match) {
       return res.status(401).json({ message: "Invalid mobile or password" });
@@ -67,7 +108,6 @@ app.post("/signup", async (req, res) => {
   const { mobile, password, name } = req.body;
 
   try {
-    // 1. Check if mobile exists
     const checkQuery = `SELECT * FROM users WHERE mobile = ?`;
     connection.query(checkQuery, [mobile], async (err, results) => {
       if (err) {
@@ -76,29 +116,33 @@ app.post("/signup", async (req, res) => {
       }
 
       if (results.length > 0) {
-        return res.status(409).json({ message: "Mobile number already exists" });
+        return res
+          .status(409)
+          .json({ message: "Mobile number already exists" });
       }
 
-      // 2. Hash the password
       const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-      // 3. Insert new user
       const insertQuery = `INSERT INTO users (name, mobile, password) VALUES (?, ?, ?)`;
-      connection.query(insertQuery, [name, mobile, hashedPassword], (err, results) => {
-        if (err) {
-          console.error("Insert error:", err);
-          return res.status(500).json({ message: "Insert failed" });
-        }
-        // 4. Generate token
-        const payload = { mobile, name };
-        const token = jwt.sign(payload, "shhhh");
+      connection.query(
+        insertQuery,
+        [name, mobile, hashedPassword],
+        (err, results) => {
+          if (err) {
+            console.error("Insert error:", err);
+            return res.status(500).json({ message: "Insert failed" });
+          }
 
-        return res.status(200).json({
-          message: "Signup successful",
-          token,
-          user: payload,
-        });
-      });
+          const payload = { mobile, name };
+          const token = jwt.sign(payload, "shhhh");
+
+          return res.status(200).json({
+            message: "Signup successful",
+            token,
+            user: payload,
+          });
+        }
+      );
     });
   } catch (err) {
     console.error("Hashing error:", err);
@@ -106,10 +150,9 @@ app.post("/signup", async (req, res) => {
   }
 });
 
-
 app.post("/logs", (req, res) => {
-  const forwarded = req.headers['x-forwarded-for'];
-  const ip = forwarded ? forwarded.split(',')[0].trim() : req.socket.remoteAddress;
+  const forwarded = req.headers["x-forwarded-for"];
+  const ip = forwarded ? forwarded.split(",")[0].trim() : req.socket.remoteAddress;
 
   const token = req.body.token;
   if (!token) {
@@ -146,7 +189,6 @@ app.post("/logs", (req, res) => {
     }
 
     if (results.affectedRows === 0) {
-      // Duplicate log within 2 seconds
       return res.status(200).json({ message: "Duplicate log skipped (within 2 seconds)" });
     }
 
@@ -187,7 +229,6 @@ function jwtv(req, res) {
         return res.status(401).send({ error: "User no longer exists" });
       }
 
-      // ✅ All good
       console.log("✅ User found. Returning ok.");
       res.status(200).send("ok");
     });
@@ -197,7 +238,6 @@ function jwtv(req, res) {
     res.status(401).send({ error: "Invalid or expired token" });
   }
 }
-
 
 app.post("/Main", jwtv);
 
