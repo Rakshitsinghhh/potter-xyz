@@ -12,7 +12,6 @@ export function Balancefetcher({ address }) {
         const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
         const publicKey = new PublicKey(address);
         const balanceInLamports = await connection.getBalance(publicKey);
-        
         setBalance(balanceInLamports / 1e9);
       } catch (error) {
         console.error("Error fetching balance:", error);
