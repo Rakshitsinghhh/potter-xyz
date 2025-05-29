@@ -8,3 +8,7 @@
   font-weight: normal;
   font-style: normal;
 }
+#jupiter-terminal {
+  width: 100%;
+  height: 600px;
+}

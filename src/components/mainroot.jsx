@@ -2,14 +2,14 @@ import React, { useEffect, useRef, useState } from "react";
 import { Userpanel } from "./userpanel";
 import { Link } from "react-router-dom";
 
-
 export default function Main() {
-  const [panel, setpanel] = useState(false);
+  const [panel, setPanel] = useState(false);
   const fullTime = 20;
   const [totalSeconds, setTotalSeconds] = useState(fullTime);
   const intervalRef = useRef(null);
   const fillRef = useRef(null);
-  const [authenticated, setAuthenticated] = useState(false); // 🔑 auth state
+  const [authenticated, setAuthenticated] = useState(false);
+  const jupiterInitializedRef = useRef(false); // track if Jupiter initialized
 
   const formatTime = (seconds) => {
     const h = String(Math.floor(seconds / 3600)).padStart(2, "0");
@@ -53,13 +53,11 @@ export default function Main() {
     }, 1000);
   };
 
-  const paneler = () => setpanel((prev) => !prev);
+  const togglePanel = () => setPanel((prev) => !prev);
 
-  // Auth check
   useEffect(() => {
     const authenticate = async () => {
       const tkn = localStorage.getItem("token");
-
       try {
         const response = await fetch("http://localhost:5000/Main", {
           method: "POST",
@@ -71,44 +69,74 @@ export default function Main() {
           await fetch("http://localhost:5000/logs", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ token: tkn ,action : "main accessed"}),
+            body: JSON.stringify({ token: tkn, action: "main accessed" }),
           });
-
-          setAuthenticated(true); // ✅ allow rendering
+          setAuthenticated(true);
         } else {
-          setAuthenticated(false); // 🚫 block rendering
+          setAuthenticated(false);
         }
       } catch (err) {
         console.error("🚫 Error during authentication:", err);
         setAuthenticated(false);
       }
     };
-
     authenticate();
   }, []);
 
+  // Initialize Jupiter Terminal once after component mounts, assuming script loaded in index.html
+  useEffect(() => {
+    if (jupiterInitializedRef.current) return;
 
-// Inside your component:
-if (!authenticated) return (
-  <div>
-    You are unauthorized. Please login using the link below:
-    <br />
-    <Link to="/signup" className="text-blue-500 underline">
-      Go to Signup
-    </Link>
-  </div>
-);
+    if (window.Jupiter) {
+      window.Jupiter.init({
+        displayMode: "widget",
+        integratedTargetId: "jupiter-terminal",
+      });
+      jupiterInitializedRef.current = true;
+    } else {
+      // In rare cases script might not be loaded yet, try again after a short delay
+      const retryInit = setInterval(() => {
+        if (window.Jupiter) {
+          window.Jupiter.init({
+            displayMode: "widget",
+            integratedTargetId: "jupiter-terminal",
+          });
+          jupiterInitializedRef.current = true;
+          clearInterval(retryInit);
+        }
+      }, 200);
+      return () => clearInterval(retryInit);
+    }
+  }, []);
 
+  if (!authenticated) {
+    return (
+      <div>
+        You are unauthorized. Please login using the link below:
+        <br />
+        <Link to="/signup" className="text-blue-500 underline">
+          Go to Signup
+        </Link>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen flex bg-[#0B192C] text-white font-sans">
-      <div className={`flex flex-col items-center justify-center relative ${panel ? "w-3/4" : "w-full max-w-4xl mx-auto"}`}>
+    <div className="min-h-screen flex bg-[#0B192C] text-white font-sans relative">
+      <div
+        className={`flex flex-col items-center justify-center relative ${
+          panel ? "w-3/4" : "w-full max-w-4xl mx-auto"
+        }`}
+      >
         <h1 className="absolute top-4 text-3xl sm:text-4xl md:text-5xl font-bold text-orange-400 drop-shadow-[0_0_10px_#FF6500] font-lemonfunky">
           POTTER
         </h1>
 
         <div className="relative w-[250px] h-[300px] bg-gradient-to-b from-[#cc6b37] to-[#a7511e] rounded-[60%_60%_45%_45%/40%_40%_60%_60%] shadow-[inset_0_0_20px_rgba(0,0,0,0.2)] overflow-hidden flex justify-center items-end mb-8 border-[4px] border-[#a24a1b] mt-20">
-          <div ref={fillRef} className="absolute bottom-0 left-0 w-full bg-[#FF6500] transition-all duration-1000 z-[1]"></div>
+          <div
+            ref={fillRef}
+            className="absolute bottom-0 left-0 w-full bg-[#FF6500] transition-all duration-1000 z-[1]"
+          ></div>
           <div className="relative z-[2] text-2xl text-white pb-5 drop-shadow-[0_0_10px_#FF6500]">
             {formatTime(totalSeconds)}
           </div>
@@ -120,9 +148,15 @@ if (!authenticated) return (
         >
           Reset Timer
         </button>
+
+        {/* 🧩 Jupiter Mount Point */}
+        <div id="jupiter-terminal" className="mt-10 w-full max-w-3xl"></div>
       </div>
 
-      <button onClick={paneler} className="absolute top-1 right-4 px-4 py-2 bg-orange-500 rounded font-lemonfunky">
+      <button
+        onClick={togglePanel}
+        className="absolute top-1 right-4 px-4 py-2 bg-orange-500 rounded font-lemonfunky"
+      >
         {panel ? "Hide Panel" : "Show Panel"}
       </button>
 
