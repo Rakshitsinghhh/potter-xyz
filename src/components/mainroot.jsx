@@ -132,6 +132,7 @@ export default function Main() {
           POTTER
         </h1>
 
+
         <div className="relative w-[250px] h-[300px] bg-gradient-to-b from-[#cc6b37] to-[#a7511e] rounded-[60%_60%_45%_45%/40%_40%_60%_60%] shadow-[inset_0_0_20px_rgba(0,0,0,0.2)] overflow-hidden flex justify-center items-end mb-8 border-[4px] border-[#a24a1b] mt-20">
           <div
             ref={fillRef}
