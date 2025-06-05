@@ -136,7 +136,7 @@ export default function Main() {
         <div className="relative w-[250px] h-[300px] bg-gradient-to-b from-[#cc6b37] to-[#a7511e] rounded-[60%_60%_45%_45%/40%_40%_60%_60%] shadow-[inset_0_0_20px_rgba(0,0,0,0.2)] overflow-hidden flex justify-center items-end mb-8 border-[4px] border-[#a24a1b] mt-20">
           <div
             ref={fillRef}
-            className="absolute bottom-0 left-0 w-full bg-[#FF6500] transition-all duration-1000 z-[1]"
+            className="absolute bottom-0 left-0 w-full bg-[#FF6500] transition-all dfuration-1000 z-[1]"
           ></div>
           <div className="relative z-[2] text-2xl text-white pb-5 drop-shadow-[0_0_10px_#FF6500]">
             {formatTime(totalSeconds)}

@@ -4,6 +4,8 @@ import mysql from "mysql";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import dotenv from 'dotenv';
+import { Potallocation } from "./components/functions/potallocation.js";
+
 
 dotenv.config();
 
@@ -107,7 +109,13 @@ app.post("/login", (req, res) => {
 app.post("/signup", async (req, res) => {
   const { mobile, password, name } = req.body;
 
+  // Basic input validation
+  if (!mobile || !password || !name) {
+    return res.status(400).json({ message: "Missing required fields" });
+  }
+
   try {
+    // Check if mobile exists
     const checkQuery = `SELECT * FROM users WHERE mobile = ?`;
     connection.query(checkQuery, [mobile], async (err, results) => {
       if (err) {
@@ -116,25 +124,29 @@ app.post("/signup", async (req, res) => {
       }
 
       if (results.length > 0) {
-        return res
-          .status(409)
-          .json({ message: "Mobile number already exists" });
+        return res.status(409).json({ message: "Mobile number already exists" });
       }
 
+      // Hash password
       const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-      const insertQuery = `INSERT INTO users (name, mobile, password) VALUES (?, ?, ?)`;
+      // Get pot_id, if async, await this
+      const pot_id = await Potallocation();
+
+      // Insert new user
+      const insertQuery = `INSERT INTO users (name, mobile, password, pot_id) VALUES (?, ?, ?, ?)`;
       connection.query(
         insertQuery,
-        [name, mobile, hashedPassword],
+        [name, mobile, hashedPassword, pot_id],
         (err, results) => {
           if (err) {
             console.error("Insert error:", err);
             return res.status(500).json({ message: "Insert failed" });
           }
 
+          // Create JWT token
           const payload = { mobile, name };
-          const token = jwt.sign(payload, "shhhh");
+          const token = jwt.sign(payload, process.env.JWT_SECRET || "shhhh");
 
           return res.status(200).json({
             message: "Signup successful",
@@ -145,10 +157,11 @@ app.post("/signup", async (req, res) => {
       );
     });
   } catch (err) {
-    console.error("Hashing error:", err);
+    console.error("Error:", err);
     return res.status(500).json({ message: "Error processing signup" });
   }
 });
+
 
 app.post("/logs", (req, res) => {
   const forwarded = req.headers["x-forwarded-for"];
@@ -193,6 +206,41 @@ app.post("/logs", (req, res) => {
     }
 
     res.status(200).json({ message: "Log inserted successfully" });
+  });
+});
+
+app.post("/potallocation", (req, res) => {
+  const selectQuery = "SELECT id FROM pots WHERE user_count < 10 LIMIT 1";
+
+  connection.query(selectQuery, (err, result) => {
+    if (err) {
+      console.error("Pot allocation error:", err);
+      return res.status(500).json({ message: "Pot ID allocation failed" });
+    }
+
+    if (result.length > 0) {
+      const potId = result[0].id;
+      console.log("Allocated existing Pot ID:", potId);
+      return res.status(200).json({ pot_id: potId });
+    } else {
+
+      // No existing pot found, so insert a new one
+      const insertQuery = `
+        INSERT INTO pots (user_count, start_timer, end_timer, amount, last_bet_mobile, winner_mobile, status)
+        VALUES (0, NOW(), DATE_ADD(NOW(), INTERVAL 12 HOUR), 0.00, NULL, NULL, 'active')
+      `;
+
+      connection.query(insertQuery, (insertErr, insertResult) => {
+        if (insertErr) {
+          console.error("Error creating new pot:", insertErr);
+          return res.status(500).json({ message: "Failed to create a new pot" });
+        }
+
+        const newPotId = insertResult.insertId;
+        console.log("Created new Pot ID:", newPotId);
+        return res.status(200).json({ pot_id: newPotId });
+      });
+    }
   });
 });
 
@@ -244,3 +292,5 @@ app.post("/Main", jwtv);
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });
+
+export default connection;
